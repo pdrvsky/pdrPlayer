@@ -1,8 +1,11 @@
-﻿using System;
+﻿using Ookii.Dialogs.Wpf;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Timers;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -10,24 +13,29 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using Ookii.Dialogs.Wpf;
 using System.Windows.Resources;
+using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace pdrPlayer
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for Window1.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class window : Window
     {
-        PlaybackControl playback;
-        bool playlistHidden = true;
+        PlaybackControl playbackControl;
+        ICollectionView view;
+        Timer timer;
+        Boolean playlistExpanded = false;
 
-        public MainWindow()
+        public window()
         {
             InitializeComponent();
+
+            timer = new Timer();
+            timer.Interval = 1000;
+            timer.Elapsed += new ElapsedEventHandler(updateSeekBar);
         }
 
         private void closeButton_Click(object sender, RoutedEventArgs e)
@@ -40,22 +48,33 @@ namespace pdrPlayer
             this.WindowState = System.Windows.WindowState.Minimized;
         }
 
+        private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
+        }
+
         private void playPauseButton_Click(object sender, RoutedEventArgs e)
         {
-            if (playback == null)
+            if (playbackControl == null)
             {
                 VistaFolderBrowserDialog dialog = new VistaFolderBrowserDialog();
                 if (dialog.ShowDialog() == true)
                 {
                     try
                     {
-                        playback = new PlaybackControl(dialog.SelectedPath);
-                        playback.TrackChanged += new PlaybackControl.TrackChangedHandler(changeArtwork);
-                        playback.TrackChanged += new PlaybackControl.TrackChangedHandler(updateInterface);
-                        changeArtwork();
+                        playbackControl = new PlaybackControl(dialog.SelectedPath);
+                        playbackControl.CurrentPlaylistObject.playlistChanged += new Playlist.playlistChangedHandler(updatePlaylist);
+                        playbackControl.TrackChanged += new PlaybackControl.TrackChangedHandler(changeArtwork);
+                        playbackControl.TrackChanged += new PlaybackControl.TrackChangedHandler(updateInterface);
+                        this.updatePlaylist();
+                        this.changeArtwork();
                         this.updateInterface();
+
+                        timer.Start();
                     }
-                    catch (Exception exception) {
+                    catch (Exception exception)
+                    {
                         Console.WriteLine(exception.Message);
                     }
                 }
@@ -66,8 +85,16 @@ namespace pdrPlayer
             }
             else
             {
-                if (playback.PLAYBACK_STATE == PlaybackControl.PLAYBACK_STATE_PLAYING) playback.Pause();
-                else if (playback.PLAYBACK_STATE == PlaybackControl.PLAYBACK_STATE_PAUSED) playback.Play();
+                if (playbackControl.PLAYBACK_STATE == PlaybackControl.PLAYBACK_STATE_PLAYING)
+                {
+                    timer.Stop();
+                    playbackControl.Pause();
+                }
+                else if (playbackControl.PLAYBACK_STATE == PlaybackControl.PLAYBACK_STATE_PAUSED)
+                {
+                    timer.Start();
+                    playbackControl.Play();
+                }
             }
 
             this.togglePlayPause();
@@ -75,24 +102,50 @@ namespace pdrPlayer
 
         private void nextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (playback != null) playback.Next();
+            timer.Stop();
+            if (playbackControl != null) playbackControl.Next();
+            timer.Start();
         }
 
         private void previousButton_Click(object sender, RoutedEventArgs e)
         {
-            if (playback != null) playback.Previous();
-        } 
-
-        private void mainWindow_MouseDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-                this.DragMove();
+            timer.Stop();
+            if (playbackControl != null) playbackControl.Previous();
+            timer.Start();
         }
+
+        private void expand_Click(object sender, RoutedEventArgs e)
+        {
+            if (playlistExpanded == true)
+            {
+                bottomGrid.Visibility = System.Windows.Visibility.Collapsed;
+                playlistExpanded = false;
+            }
+            else
+            {
+                bottomGrid.Visibility = System.Windows.Visibility.Visible;
+                playlistExpanded = true;
+            }
+        }
+
+        private void playlistItem_DoubleClick(object sender, EventArgs e)
+        {
+            ListBoxItem item = sender as ListBoxItem;
+            int index = playlistBox.Items.IndexOf(item.Content);
+            view.MoveCurrentTo(item.Content);
+
+            timer.Stop();
+            playbackControl.Play(index);
+            togglePlayPause();
+            timer.Start();
+        }
+
+        //INTERFACE FUNCTIONALITY
 
         private void togglePlayPause()
         {
             Uri resourceUri;
-            if (playback.PLAYBACK_STATE == PlaybackControl.PLAYBACK_STATE_PLAYING) resourceUri = new Uri("Resources/pause.png", UriKind.Relative);
+            if (playbackControl.PLAYBACK_STATE == PlaybackControl.PLAYBACK_STATE_PLAYING) resourceUri = new Uri("Resources/pause.png", UriKind.Relative);
             else resourceUri = new Uri("Resources/play.png", UriKind.Relative);
 
             StreamResourceInfo streamInfo = Application.GetResourceStream(resourceUri);
@@ -102,51 +155,63 @@ namespace pdrPlayer
             playPauseButton.Background = brush;
         }
 
-        public void updateInterface()
+        public void updatePlaylist()
         {
-            if (playback == null) return;
-            titleBox.Content = playback.currentTrack.Artist + " - " + playback.currentTrack.Title;
-
-            foreach (Track track in playback.CurrentPlaylist)
-            {
-                playlistBox.Items.Add(String.Format("{0}. {1} / {2}", track.TrackNumber.ToString("00"), track.Title));
-            }
+            playlistBox.Items.Clear();
+            view = CollectionViewSource.GetDefaultView(playbackControl.CurrentPlaylist);
+            view.GroupDescriptions.Add(new PropertyGroupDescription("Album"));
+            playlistBox.ItemsSource = view;
         }
 
-        public void changeArtwork()  
+        public void updateInterface()
         {
-            if (playback == null || playback.currentTrack.ArtworkImage == null) return;
+            if (playbackControl == null) return;
+
+            progressBar.Value = 0;
+            titleBlock.Text = playbackControl.currentTrack.Title;
+            artistLabel.Content = playbackControl.currentTrack.Artist + " - " + playbackControl.currentTrack.Album + " (" + playbackControl.currentTrack.Year + ")";
+            view.MoveCurrentTo(playbackControl.CurrentPlaylistObject.Get(playbackControl.CURRENT_PLAYLIST_INDEX));
+        }
+
+        public void changeArtwork()
+        {
+            if (playbackControl == null || playbackControl.currentTrack.ArtworkImage == null) return;
 
             Color oColor = Color.FromArgb(255, 33, 33, 33);
             Image oImage = new Image();
-            oImage.Source = playback.currentTrack.ArtworkImage;
+            oImage.Source = playbackControl.currentTrack.ArtworkImage;
             oImage.Opacity = 0.4;
 
-            var oGrid = new Grid();  
-            var oRectangle = new Rectangle() { Fill = new SolidColorBrush(oColor) };  
-            oGrid.Children.Add(oRectangle);  
-            oGrid.Children.Add(oImage);  
-            var oVisualBrush = new VisualBrush();  
+            var oGrid = new Grid();
+            var oRectangle = new Rectangle() { Fill = new SolidColorBrush(oColor) };
+            oGrid.Children.Add(oRectangle);
+            oGrid.Children.Add(oImage);
+            var oVisualBrush = new VisualBrush();
             oVisualBrush.Visual = oGrid;
             oVisualBrush.Stretch = Stretch.UniformToFill;
 
-            mainWindow.Background = oVisualBrush;
+            topGrid.Background = oVisualBrush;
         }
 
-        private void playlistButton_Click(object sender, RoutedEventArgs e)
+        public void updateSeekBar(object sender, EventArgs e)
         {
-            if (playlistHidden == true)
-            {
-                mainWindow.Width = 750;
-                this.Width = 750;
-                playlistHidden = false;
-            }
-            else
-            {
-                mainWindow.Width = 525;
-                this.Width = 525;
-                playlistHidden = true;
-            }
+            Dispatcher.Invoke(DispatcherPriority.Normal, new Action<ProgressBar>(setValue), progressBar);
+        }
+
+        private void setValue(ProgressBar obj)
+        {
+            double percentagePostion = (double)playbackControl.playbackPosition.Ticks / playbackControl.currentTrack.Duration.Ticks;
+            obj.Value = percentagePostion * 100;
+        }
+
+        private void progressBar_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (playbackControl == null) return;
+
+            double MousePosition = e.GetPosition(this).X;
+            double ratio = MousePosition / progressBar.ActualWidth;
+
+            playbackControl.Seek(ratio);
         }
     }
 }
