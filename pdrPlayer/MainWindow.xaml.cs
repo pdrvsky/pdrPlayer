@@ -56,7 +56,7 @@ namespace pdrPlayer
 
         private void playPauseButton_Click(object sender, RoutedEventArgs e)
         {
-            if (playbackControl == null)
+            /*if (playbackControl == null)
             {
                 VistaFolderBrowserDialog dialog = new VistaFolderBrowserDialog();
                 if (dialog.ShowDialog() == true)
@@ -97,7 +97,12 @@ namespace pdrPlayer
                 }
             }
 
-            this.togglePlayPause();
+            this.togglePlayPause();*/
+
+            libraryParser lib = new libraryParser();
+            var libData = lib.readDat();
+            playlistBox.Items.Clear();
+            playlistBox.ItemsSource = libData;
         }
 
         private void nextButton_Click(object sender, RoutedEventArgs e)
@@ -138,6 +143,12 @@ namespace pdrPlayer
             playbackControl.Play(index);
             togglePlayPause();
             timer.Start();
+        }
+
+        private void settings_Click(object sender, EventArgs e)
+        {
+            Settings settings = new Settings();
+            settings.Show();
         }
 
         //INTERFACE FUNCTIONALITY

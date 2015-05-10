@@ -1,0 +1,79 @@
+﻿<Window x:Class="pdrPlayer.Settings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        Title="Settings" Name="pdrSettings" Height="250" Width="400" WindowStyle="None" 
+        AllowsTransparency="True" Unloaded="pdrSettings_Unloaded">
+
+    <Grid Background="#FF222222">
+        <Button Content="x" Name="closeButton" HorizontalAlignment="Right" Margin="0,0,0,0" Width="30" Height="15" BorderBrush="{x:Null}" BorderThickness="0" VerticalAlignment="Top" Click="closeButton_Click">
+            <Button.Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                    <Setter Property="FontSize" Value="8"></Setter>
+                    <Setter Property="Background" Value="#FF555555"></Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FFBB0000"></Setter>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+        <Button Content="-" Name="minimizeButton" Margin="0,0,30,0" BorderBrush="{x:Null}" BorderThickness="0" Width="20" Height="15" VerticalAlignment="Top" HorizontalAlignment="Right" Click="minimizeButton_Click">
+            <Button.Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                    <Setter Property="FontSize" Value="8"></Setter>
+                    <Setter Property="Background" Value="#FF444444"></Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FFEEC024"></Setter>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+
+        <Button Content="Anuluj" Name="cancelButton" Margin="0,0,10,10" BorderBrush="{x:Null}" BorderThickness="0" Width="50" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="cancelButton_Click">
+            <Button.Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                    <Setter Property="FontSize" Value="8"></Setter>
+                    <Setter Property="Background" Value="#FF444444"></Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FF333333"></Setter>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+        <Button Content="OK" x:Name="okButton" Margin="0,0,65,10" BorderBrush="{x:Null}" BorderThickness="0" Width="50" Height="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="okButton_Click">
+            <Button.Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                    <Setter Property="FontSize" Value="8"/>
+                    <Setter Property="Background" Value="#FF444444"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FF333333"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+        <TextBox x:Name="mediaRoot" HorizontalAlignment="Left" Height="20" Margin="10,60,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="310" BorderThickness="0" Background="#FF333333" FontSize="10" Foreground="#FFDEDEDE" Text="" Padding="5,3,5,0" IsReadOnly="True"/>
+        <Label Content="Biblioteka mediów: " HorizontalAlignment="Left" Margin="6,35,0,0" VerticalAlignment="Top" Foreground="White" FontSize="10"/>
+        <Label Content="Ustawienia" x:Name="WindowTitle" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="White" Margin="5,5,0,0"/>
+        <Button Content="Przeglądaj" x:Name="browseButton" Margin="0,60,15,0" BorderBrush="{x:Null}" BorderThickness="0" Width="60" HorizontalAlignment="Right" Height="20" VerticalAlignment="Top" Background="#FF2F2F2F" Click="browseButton_Click">
+            <Button.Style>
+                <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                    <Setter Property="FontSize" Value="8"/>
+                    <Setter Property="Background" Value="#FF444444"/>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="#FF333333"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+    </Grid>
+</Window>

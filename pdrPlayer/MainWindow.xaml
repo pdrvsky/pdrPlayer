@@ -63,7 +63,7 @@
                         <ImageBrush ImageSource="Resources/backward.png"/>
                     </Button.Background>
                 </Button>
-                <Button x:Name="expandPlaylistButton" Margin="371,15,15,21" VerticalAlignment="Stretch" Height="14" Width="14" BorderBrush="{x:Null}" Style="{StaticResource defaultButton}" Click="expand_Click" >
+                <Button x:Name="expandPlaylistButton" Margin="365,15,21,21" VerticalAlignment="Stretch" Height="14" Width="14" BorderBrush="{x:Null}" Style="{StaticResource defaultButton}" Click="expand_Click" >
                     <Button.Background>
                         <ImageBrush ImageSource="Resources/expand.png"/>
                     </Button.Background>
@@ -91,6 +91,11 @@
                         </Style>
                     </ProgressBar.Style>
                 </ProgressBar>
+                <Button x:Name="expandPlaylistButton_Copy" Margin="21,15,365,21" VerticalAlignment="Stretch" Height="14" Width="14" BorderBrush="{x:Null}" Style="{StaticResource defaultButton}" Click="settings_Click" >
+                    <Button.Background>
+                        <ImageBrush ImageSource="Resources/expand.png"/>
+                    </Button.Background>
+                </Button>
             </Grid>
         </Grid>
 

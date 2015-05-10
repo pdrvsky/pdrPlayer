@@ -54,7 +54,7 @@ namespace pdrPlayer
             {
                 this.Path = path;
             }
-            catch (DirectoryNotFoundException e)
+            catch (DirectoryNotFoundException)
             {
                 throw new Exception("Initialization error.");
             }
