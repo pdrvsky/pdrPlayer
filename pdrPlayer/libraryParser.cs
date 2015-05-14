@@ -38,22 +38,26 @@ namespace pdrPlayer
             foreach (string file in files)
             {
                 fileCount++;
-                tagFile = TagLib.File.Create(file);
-                tracks.Add(new mediaStruct.Track() { Artist = tagFile.Tag.FirstArtist, Album = tagFile.Tag.Album, Title = tagFile.Tag.Title, Year = tagFile.Tag.Year, TrackNumber = tagFile.Tag.Track, Duration = tagFile.Properties.Duration });
+                try
+                {
+                    tagFile = TagLib.File.Create(file);
+                    tracks.Add(new mediaStruct.Track() { Path = file, Artist = tagFile.Tag.FirstArtist, Album = tagFile.Tag.Album, Title = tagFile.Tag.Title, Year = tagFile.Tag.Year, TrackNumber = tagFile.Tag.Track, Duration = tagFile.Properties.Duration });
+                }
+                catch (Exception) { }
 
                 if (filesParsed != null) filesParsed(fileCount, files.Count);
             }
 
-            Dictionary<string, List<mediaStruct.Track>> artists = tracks.OrderBy(o2 => o2.Artist).ThenBy(o3 => o3.Album)
+            /*Dictionary<string, List<mediaStruct.Track>> artists = tracks.OrderBy(o2 => o2.Artist).ThenBy(o3 => o3.Album)
                                                     .GroupBy(gr => gr.Artist).ToDictionary(td => td.Key, td2 => td2.ToList());
 
             foreach (KeyValuePair<string, List<mediaStruct.Track>> artist in artists)
             {
                 Dictionary<string, List<mediaStruct.Track>> albums = artist.Value.GroupBy(gr => gr.Album).ToDictionary(x => x.Key, x => x.ToList());
                 artistDict.Add(artist.Key, new mediaStruct.Artist { ArtistName = artist.Key, Albums = albums });
-            }
+            }*/
 
-            this.saveDat( artistDict );
+            this.saveList(tracks);
         }
 
         private void saveDat(Dictionary<string, mediaStruct.Artist> dictionary)
@@ -70,6 +74,20 @@ namespace pdrPlayer
             catch (Exception) { }
         }
 
+        private void saveList(List<mediaStruct.Track> list)
+        {
+            try
+            {
+                BinaryFormatter binFor = new BinaryFormatter();
+                FileStream fs = new FileStream(Environment.CurrentDirectory + "\\db.dat", FileMode.Create, FileAccess.Write);
+                binFor.Serialize(fs, list.ToArray());
+                fs.Close();
+
+                if (parsingFinished != null) parsingFinished();
+            }
+            catch (Exception) { }
+        }
+
         public Dictionary<string, mediaStruct.Artist> readDat()
         {
             try
@@ -79,6 +97,22 @@ namespace pdrPlayer
                 mediaStruct.Artist[] a_artists = (mediaStruct.Artist[])binFor.Deserialize(fs);
 
                 return a_artists.ToDictionary(t => t.ArtistName);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public List<mediaStruct.Track> readList()
+        {
+            try
+            {
+                BinaryFormatter binFor = new BinaryFormatter();
+                FileStream fs = new FileStream(Environment.CurrentDirectory + "\\db.dat", FileMode.Open, FileAccess.Read);
+                mediaStruct.Track[] a_artists = (mediaStruct.Track[])binFor.Deserialize(fs);
+
+                return a_artists.ToList();
             }
             catch (Exception)
             {

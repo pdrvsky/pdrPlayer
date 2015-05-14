@@ -12,6 +12,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Resources;
 using System.Windows.Shapes;
@@ -29,14 +30,20 @@ namespace pdrPlayer
         Timer timer;
         Boolean playlistExpanded = false;
 
+        List<mediaStruct.Track> sourceList = new List<mediaStruct.Track>();
+
         public window()
         {
             InitializeComponent();
 
-            timer = new Timer();
-            timer.Interval = 1000;
-            timer.Elapsed += new ElapsedEventHandler(updateSeekBar);
+            libraryParser lib = new libraryParser();
+            sourceList = lib.readList().Where(s => s.Artist != null).ToList();
+            var arts = lib.readList().GroupBy(g => g.Artist, StringComparer.InvariantCultureIgnoreCase).Select(sel => sel.Key).ToList();
+            var art = sourceList.Where( w => w.Artist == "Red Hot Chili Peppers" ).ToList();
+
+            LibraryView.ItemsSource = arts;
         }
+
 
         private void closeButton_Click(object sender, RoutedEventArgs e)
         {
@@ -98,11 +105,6 @@ namespace pdrPlayer
             }
 
             this.togglePlayPause();*/
-
-            libraryParser lib = new libraryParser();
-            var libData = lib.readDat();
-            playlistBox.Items.Clear();
-            playlistBox.ItemsSource = libData;
         }
 
         private void nextButton_Click(object sender, RoutedEventArgs e)
@@ -133,7 +135,7 @@ namespace pdrPlayer
             }
         }
 
-        private void playlistItem_DoubleClick(object sender, EventArgs e)
+        /*private void playlistItem_DoubleClick(object sender, EventArgs e)
         {
             ListBoxItem item = sender as ListBoxItem;
             int index = playlistBox.Items.IndexOf(item.Content);
@@ -143,6 +145,21 @@ namespace pdrPlayer
             playbackControl.Play(index);
             togglePlayPause();
             timer.Start();
+        }*/
+
+        private void backClick( object sender, EventArgs e )
+        {
+            animateBottomGrid(0);
+            bottomGrid.DataContext = null;
+        }
+
+        private void LoadArtist( object sender, EventArgs e )
+        {
+            ListBoxItem target = sender as ListBoxItem;
+            List<mediaStruct.Track> artistTracks = sourceList.Where(w => w.Artist.Equals(target.Content.ToString(), StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+            ArtistGrid.DataContext = artistTracks;
+            animateBottomGrid( 400 );
         }
 
         private void settings_Click(object sender, EventArgs e)
@@ -152,6 +169,18 @@ namespace pdrPlayer
         }
 
         //INTERFACE FUNCTIONALITY
+
+        private void animateBottomGrid( uint pos ){
+            Storyboard story = new Storyboard();
+            ThicknessAnimation tAnimation = new ThicknessAnimation();
+            tAnimation.From = bottomGrid.Margin;
+            tAnimation.To = new Thickness(-pos, 0, 0, 0);
+            tAnimation.Duration = TimeSpan.FromSeconds(0.15);
+            story.Children.Add(tAnimation);
+            Storyboard.SetTargetName(tAnimation, bottomGrid.Name);
+            Storyboard.SetTargetProperty(tAnimation, new PropertyPath(MediaElement.MarginProperty));
+            story.Begin(this);
+        }
 
         private void togglePlayPause()
         {
@@ -166,13 +195,13 @@ namespace pdrPlayer
             playPauseButton.Background = brush;
         }
 
-        public void updatePlaylist()
+        /*public void updatePlaylist()
         {
             playlistBox.Items.Clear();
             view = CollectionViewSource.GetDefaultView(playbackControl.CurrentPlaylist);
             view.GroupDescriptions.Add(new PropertyGroupDescription("Album"));
             playlistBox.ItemsSource = view;
-        }
+        }*/
 
         public void updateInterface()
         {
@@ -224,5 +253,37 @@ namespace pdrPlayer
 
             playbackControl.Seek(ratio);
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
+
+    public class MyTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate ArtistTemplate
+        { get; set; }
+
+        public DataTemplate AlbumTemplate
+        { get; set; }
+
+        public override DataTemplate SelectTemplate(object item, DependencyObject container)
+        {
+            ContentPresenter cp = container as ContentPresenter;
+
+            if (cp != null)
+            {
+                CollectionViewGroup cvg = cp.Content as CollectionViewGroup;
+
+                if (cvg.Items.Count > 0)
+                {
+                    if (cvg.Items[0].GetType() == typeof(mediaStruct.Track)) return AlbumTemplate;
+                    else return ArtistTemplate;
+                }
+            }
+
+            return base.SelectTemplate(item, container);
+        }
+    } 
 }
