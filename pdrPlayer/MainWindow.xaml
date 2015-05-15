@@ -305,9 +305,9 @@
                         </CollectionViewSource.GroupDescriptions>
                     </CollectionViewSource>
                 </Grid.Resources>
-                <Grid Width="400" Height="100" Background="DarkSlateGray" VerticalAlignment="Top" Margin="0">
-                    <Label Content="{Binding [0].Artist}" FontFamily="Segoe UI Light" FontSize="24" Foreground="White" Height="34" Padding="0" Margin="0,33" HorizontalAlignment="Right" Width="365"/>
-                    <Button Click="backClick" Width="11" Height="20" HorizontalAlignment="Left" Style="{StaticResource defaultButton}" Margin="16,41,0,39">
+                <Grid Width="400" Height="60" Background="#FFB8512B" VerticalAlignment="Top" Margin="0">
+                    <Label Content="{Binding [0].Artist}" FontFamily="Segoe UI Light" FontSize="24" Foreground="White" Height="34" Padding="0" Margin="0,13" HorizontalAlignment="Right" Width="365"/>
+                    <Button Click="backClick" Width="11" Height="20" HorizontalAlignment="Left" Style="{StaticResource defaultButton}" Margin="16,20,0,20">
                         <Button.Background>
                             <ImageBrush ImageSource="Resources/back.png"/>
                         </Button.Background>

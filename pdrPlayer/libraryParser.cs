@@ -41,7 +41,7 @@ namespace pdrPlayer
                 try
                 {
                     tagFile = TagLib.File.Create(file);
-                    tracks.Add(new mediaStruct.Track() { Path = file, Artist = tagFile.Tag.FirstArtist, Album = tagFile.Tag.Album, Title = tagFile.Tag.Title, Year = tagFile.Tag.Year, TrackNumber = tagFile.Tag.Track, Duration = tagFile.Properties.Duration });
+                    tracks.Add(new mediaStruct.Track() { Path = file, Artist = tagFile.Tag.FirstArtist ?? "?", Album = tagFile.Tag.Album, Title = tagFile.Tag.Title, Year = tagFile.Tag.Year, TrackNumber = tagFile.Tag.Track, Duration = tagFile.Properties.Duration });
                 }
                 catch (Exception) { }
 

@@ -38,8 +38,7 @@ namespace pdrPlayer
 
             libraryParser lib = new libraryParser();
             sourceList = lib.readList().Where(s => s.Artist != null).ToList();
-            var arts = lib.readList().GroupBy(g => g.Artist, StringComparer.InvariantCultureIgnoreCase).Select(sel => sel.Key).ToList();
-            var art = sourceList.Where( w => w.Artist == "Red Hot Chili Peppers" ).ToList();
+            var arts = lib.readList().GroupBy(g => g.Artist, StringComparer.InvariantCultureIgnoreCase).Select(sel => sel.Key).OrderBy( ord => ord ).ToList();
 
             LibraryView.ItemsSource = arts;
         }
@@ -159,7 +158,10 @@ namespace pdrPlayer
             List<mediaStruct.Track> artistTracks = sourceList.Where(w => w.Artist.Equals(target.Content.ToString(), StringComparison.InvariantCultureIgnoreCase)).ToList();
 
             ArtistGrid.DataContext = artistTracks;
-            animateBottomGrid( 400 );
+
+            new System.Threading.Thread(() => {
+                Dispatcher.BeginInvoke(new Action(() => { animateBottomGrid(400); }));
+            }).Start();
         }
 
         private void settings_Click(object sender, EventArgs e)
@@ -179,6 +181,7 @@ namespace pdrPlayer
             story.Children.Add(tAnimation);
             Storyboard.SetTargetName(tAnimation, bottomGrid.Name);
             Storyboard.SetTargetProperty(tAnimation, new PropertyPath(MediaElement.MarginProperty));
+            Storyboard.SetDesiredFrameRate(tAnimation, 60);
             story.Begin(this);
         }
 
