@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using Ookii.Dialogs.Wpf;
 using System.Xml.Linq;
+using System.IO;
 
 namespace pdrPlayer
 {
@@ -46,6 +47,7 @@ namespace pdrPlayer
             VistaFolderBrowserDialog dialog = new VistaFolderBrowserDialog();
             if (dialog.ShowDialog() == true)
             {
+                if (set == null) set = new Dictionary<string, string>();
                 set["media_root"] = dialog.SelectedPath;
                 updateSettings(set);
 
@@ -79,6 +81,7 @@ namespace pdrPlayer
 
         private Dictionary<string, string> readSettings()
         {
+            if (!File.Exists("settings.xml")) return null;
             XElement settings = XElement.Load("settings.xml");
             return settings.Elements().ToDictionary( key => key.Name.ToString(), val => val.Value );
         }
@@ -96,6 +99,7 @@ namespace pdrPlayer
 
         private void updateSettings( Dictionary<string, string> settings )
         {
+            if (settings == null) return;
             mediaRoot.Text = settings["media_root"];
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -13,5 +14,14 @@ namespace pdrPlayer
     /// </summary>
     public partial class App : Application
     {
+        void AppStartup(object sender, StartupEventArgs e)
+        {
+            window wnd;
+
+            if (e.Args.Length > 0) wnd = new window(e.Args);
+            else wnd = new window();
+
+            wnd.Show();
+        }
     }
 }

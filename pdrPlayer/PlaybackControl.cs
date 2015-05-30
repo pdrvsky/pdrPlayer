@@ -16,78 +16,67 @@ namespace pdrPlayer
         //CLASSES
         IWavePlayer waveOutDevice;
         AudioFileReader audioFileReader;
-        Playlist playlist;
+
+        //LIBRARY LIST
+        List<mediaStruct.Track> libraryList;
 
         //PLAYBACK STATES
         public const int PLAYBACK_STATE_PLAYING = 1;
         public const int PLAYBACK_STATE_PAUSED = 2;
-        public const int PLAYBACK_STATE_STOPPED = 3;
+        public const int PLAYBACK_STATE_INITIALIZED = 3;
 
         //CLASS FIELDS
         public int PLAYBACK_STATE;
         public int CURRENT_PLAYLIST_INDEX;
-        public Track currentTrack;
+        public mediaStruct.Track currentTrack;
 
-        string path;
-        public string Path
-        {
-            get
-            {
-                return this.path;
-            }
-            set
-            {
-                if (!Directory.Exists(value))
-                    throw new DirectoryNotFoundException();
-                else
-                    this.path = value;
-            }
+        public TimeSpan playbackPosition { 
+            get { if (audioFileReader != null) return audioFileReader.CurrentTime; else return new TimeSpan(); } 
         }
 
-        public TimeSpan playbackPosition { get { if (audioFileReader != null) return audioFileReader.CurrentTime; else return new TimeSpan(); } }
-        public List<Track> CurrentPlaylist { get { return this.playlist.trackList; } }
-        public Playlist CurrentPlaylistObject { get { return this.playlist; } }
-
-        public PlaybackControl(string path)
+        public PlaybackControl()
         {
-            try
-            {
-                this.Path = path;
-            }
-            catch (DirectoryNotFoundException)
-            {
-                throw new Exception("Initialization error.");
-            }
-
             waveOutDevice = new WaveOut();
             waveOutDevice.PlaybackStopped += new EventHandler<StoppedEventArgs>(playbackStopped);
-            playlist = new Playlist(this.Path);
 
-            this.playTrack();
+            PLAYBACK_STATE = PLAYBACK_STATE_INITIALIZED;
+        }
+
+        public void SetPlaylist( List<mediaStruct.Track> playlist )
+        {
+            libraryList = playlist;
+            CURRENT_PLAYLIST_INDEX = 0;
+
+            if (PLAYBACK_STATE != PLAYBACK_STATE_INITIALIZED)
+                PLAYBACK_STATE = PLAYBACK_STATE_INITIALIZED;
         }
 
         public void Play() {
-            if (playlist == null)
+            if (libraryList == null)
                 throw new Exception("Tried to play null playlist.");
 
-            if (PLAYBACK_STATE == PLAYBACK_STATE_PAUSED)
+            switch (PLAYBACK_STATE)
             {
-                waveOutDevice.Play();
-                PLAYBACK_STATE = PLAYBACK_STATE_PLAYING;
-            }
-            else if (PLAYBACK_STATE == PLAYBACK_STATE_PLAYING)
-            {
-                waveOutDevice.Pause();
-                PLAYBACK_STATE = PLAYBACK_STATE_PAUSED;
+                case PLAYBACK_STATE_INITIALIZED:
+                    this.playTrack();
+                    break;
+                case PLAYBACK_STATE_PLAYING:
+                    waveOutDevice.Pause();
+                    PLAYBACK_STATE = PLAYBACK_STATE_PAUSED;
+                    break;
+                case PLAYBACK_STATE_PAUSED:
+                    waveOutDevice.Play();
+                    PLAYBACK_STATE = PLAYBACK_STATE_PLAYING;
+                    break;
             }
         }
 
         public void Play(int index)
         {
-            if (playlist == null)
+            if (libraryList == null)
                 throw new Exception("Tried to play null playlist.");
 
-            if (index >= 0 && index <= playlist.Length)
+            if (index >= 0 && index <= libraryList.Count)
             {
                 CURRENT_PLAYLIST_INDEX = index;
                 this.playTrack();
@@ -103,7 +92,7 @@ namespace pdrPlayer
         }
 
         public void Next() {
-            if (CURRENT_PLAYLIST_INDEX + 2 > playlist.Length) return;
+            if (CURRENT_PLAYLIST_INDEX + 2 > libraryList.Count) return;
 
             CURRENT_PLAYLIST_INDEX++;
             this.playTrack();
@@ -125,8 +114,8 @@ namespace pdrPlayer
         {
             try
             {
-                this.disposeWave();
-                currentTrack = playlist.Get(CURRENT_PLAYLIST_INDEX);
+                this.DisposeWave();
+                currentTrack = libraryList[CURRENT_PLAYLIST_INDEX];
                 audioFileReader = new AudioFileReader(currentTrack.Path);
                 waveOutDevice.Init(audioFileReader);
                 waveOutDevice.Play();
@@ -142,16 +131,12 @@ namespace pdrPlayer
             }
         }
 
-        private void disposeWave()
+        public void DisposeWave()
         {
             if (audioFileReader != null)
             {
+                waveOutDevice.Stop();
                 audioFileReader.Dispose();
-            }
-
-            if (currentTrack != null)
-            {
-                currentTrack = null;
             }
         }
 

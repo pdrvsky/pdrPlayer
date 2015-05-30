@@ -4,8 +4,9 @@
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         xmlns:scm="clr-namespace:System.ComponentModel;assembly=WindowsBase"
         xmlns:local="clr-namespace:pdrPlayer" 
-        Title="window" Name="plrWindow" Height="Auto" Width="400" WindowStyle="None" 
-        AllowsTransparency="True" Background="Transparent" SizeToContent="WidthAndHeight">
+        Title="pdrPlayer" Name="plrWindow" Height="Auto" Width="400" WindowStyle="None" 
+        UseLayoutRounding="True" Background="Transparent" SizeToContent="WidthAndHeight"
+        Loaded="Application_Startup" Unloaded="Application_Exit" ResizeMode="CanMinimize" Activated="plrWindow_Activated">
 
     <Window.Resources>
         <!--Scrollbar Thumbs-->
@@ -110,28 +111,31 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
-        <DataTemplate x:Key="ArtistTemplate">
-            <Border BorderBrush="{x:Null}" Height="40" Background="#FF222222">
-                <TextBlock Text="{Binding Name}" Foreground="White" Margin="20,0,0,0" 
-                                               VerticalAlignment="Center" FontFamily="Segoe UI Light" FontSize="16" />
-            </Border>
-        </DataTemplate>
-        <DataTemplate x:Key="AlbumTemplate">
-            <Border BorderBrush="{x:Null}" Height="30">
-                <TextBlock Text="{Binding Name}" Foreground="White" Margin="20,0,0,0" 
-                                               VerticalAlignment="Center" FontFamily="Segoe UI Light" FontSize="12" />
-                <Border.Background>
-                    <ImageBrush  ImageSource="Resources/play.png"></ImageBrush>
-                </Border.Background>
-            </Border>
-        </DataTemplate>
-        <local:MyTemplateSelector x:Key="MyTemplateSelectorObj" 
-             AlbumTemplate="{StaticResource AlbumTemplate}" 
-             ArtistTemplate="{StaticResource ArtistTemplate}"/>
     </Window.Resources>
+    
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo>
+            <TaskbarItemInfo.ThumbButtonInfos>
+                <ThumbButtonInfo x:Name="btnPrevious"
+                             ImageSource="Resources/thumb_prev.png"
+                             Description="Previous"
+                             IsBackgroundVisible="True"
+                             Click="previousButton_Click" />
+                <ThumbButtonInfo x:Name="btnPlay"
+                             ImageSource="Resources/thumb_play.png"
+                             Description="Play/Pause"
+                             IsBackgroundVisible="True"
+                             Click="playPauseButton_Click" />
+                <ThumbButtonInfo x:Name="btnNext"
+                             ImageSource="Resources/thumb_next.png"
+                             Description="Next"
+                             IsBackgroundVisible="True"
+                             Click="nextButton_Click" />
+            </TaskbarItemInfo.ThumbButtonInfos>
+        </TaskbarItemInfo>
+    </Window.TaskbarItemInfo>
 
-    <Grid Width="400">
+    <Grid Width="400" Background="#FF333333">
         <Grid.RowDefinitions>
             <RowDefinition Height="225"/>
             <RowDefinition Height="Auto"/>
@@ -217,15 +221,30 @@
                         </Style>
                     </ProgressBar.Style>
                 </ProgressBar>
-                <Button x:Name="expandPlaylistButton_Copy" Margin="21,15,365,21" VerticalAlignment="Stretch" Height="14" Width="14" BorderBrush="{x:Null}" Style="{StaticResource defaultButton}" Click="settings_Click" >
-                    <Button.Background>
-                        <ImageBrush ImageSource="Resources/expand.png"/>
-                    </Button.Background>
+                <Button x:Name="expandPlaylistButton_Copy" Margin="15,15,370,20" VerticalAlignment="Stretch" Height="15" Width="15" BorderBrush="{x:Null}" Click="settings_Click" SnapsToDevicePixels="True" >
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                            <Setter Property="Background">
+                                <Setter.Value>
+                                    <ImageBrush ImageSource="Resources/settings.png" Stretch="Uniform"/>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <ImageBrush ImageSource="Resources/settings.png" Stretch="Uniform" Opacity="0.6"/>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
                 </Button>
             </Grid>
         </Grid>
 
-        <Grid Grid.Row="1" x:Name="bottomGrid" ScrollViewer.HorizontalScrollBarVisibility="Hidden" Width="800" Margin="-400,0,0,0" HorizontalAlignment="Left" Height="Auto" MaxHeight="400">
+        <Grid Grid.Row="1" x:Name="bottomGrid" ScrollViewer.HorizontalScrollBarVisibility="Hidden" Width="800" Margin="0,0,0,0" HorizontalAlignment="Left" Height="Auto" MaxHeight="400">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="400"></ColumnDefinition>
                 <ColumnDefinition Width="400"></ColumnDefinition>
@@ -295,36 +314,62 @@
             <Grid x:Name="ArtistGrid" Grid.Column="1" Background="#FF1A1A1A" Width="400" Height="Auto" MaxHeight="400">
                 <Grid.Resources>
                     <CollectionViewSource Source="{Binding}" x:Key="cvs">
-                        <CollectionViewSource.SortDescriptions>
-                            <scm:SortDescription PropertyName="Year"></scm:SortDescription>
-                            <scm:SortDescription PropertyName="Album"></scm:SortDescription>
-                            <scm:SortDescription PropertyName="TrackNumber"/>
-                        </CollectionViewSource.SortDescriptions>
                         <CollectionViewSource.GroupDescriptions>
                             <PropertyGroupDescription PropertyName="Album"></PropertyGroupDescription>
                         </CollectionViewSource.GroupDescriptions>
                     </CollectionViewSource>
                 </Grid.Resources>
-                <Grid Width="400" Height="60" Background="#FFB8512B" VerticalAlignment="Top" Margin="0">
-                    <Label Content="{Binding [0].Artist}" FontFamily="Segoe UI Light" FontSize="24" Foreground="White" Height="34" Padding="0" Margin="0,13" HorizontalAlignment="Right" Width="365"/>
-                    <Button Click="backClick" Width="11" Height="20" HorizontalAlignment="Left" Style="{StaticResource defaultButton}" Margin="16,20,0,20">
-                        <Button.Background>
-                            <ImageBrush ImageSource="Resources/back.png"/>
-                        </Button.Background>
+                <Grid Width="400" Height="60" Background="#FFa6421c" VerticalAlignment="Top" Margin="0">
+                    <Label Content="{Binding [0].Artist}" FontFamily="Segoe UI Light" FontSize="24" Foreground="White" Height="34" Padding="0" Margin="-5,13" HorizontalAlignment="Right" Width="365"/>
+                    <Button Click="backClick" Width="25" Height="60" HorizontalAlignment="Left" VerticalContentAlignment="Center">
+                        <Button.Style>
+                            <Style TargetType="{x:Type Button}" BasedOn="{StaticResource defaultButton}">
+                                <Setter Property="Background">
+                                    <Setter.Value>
+                                        <ImageBrush Stretch="None" AlignmentX="Center" AlignmentY="Center" ImageSource="Resources/back.png"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background">
+                                            <Setter.Value>
+                                                <VisualBrush Stretch="None">
+                                                    <VisualBrush.Visual>
+                                                        <Border Background="#FF922f0b" Width="25" Height="60">
+                                                            <Image Source="Resources/back.png" Width="9" Height="15"></Image>
+                                                        </Border>
+                                                    </VisualBrush.Visual>
+                                                </VisualBrush>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                     </Button>
                 </Grid>
                 <ListBox ItemsSource="{Binding Source={StaticResource cvs}}" Name="ArtistView" VerticalAlignment="Top" HorizontalAlignment="Stretch" Background="Transparent" 
-                         Width="400" Height="Auto" MaxHeight="300" Margin="0,100,0,0" BorderThickness="0" Padding="0,0,-20,10" IsSynchronizedWithCurrentItem="True">
+                         Width="400" Height="Auto" MaxHeight="340" Margin="0,60,0,0" BorderThickness="0" Padding="0,0,-20,10" IsSynchronizedWithCurrentItem="True">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Grid>
-                                <TextBlock>
+                                <TextBlock Width="330" HorizontalAlignment="Left" Margin="0">
                                     <TextBlock.Text>
                                         <MultiBinding StringFormat="{}{0:00}. {1}">
                                             <Binding Path="TrackNumber"></Binding>
                                             <Binding Path="Title"></Binding>
                                         </MultiBinding>
                                     </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock Width="40" Margin="330,0,0,0">
+                                    <TextBlock>
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0:00}:{1:00}">
+                                                <Binding Path="Duration.Minutes"></Binding>
+                                                <Binding Path="Duration.Seconds"></Binding>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
                                 </TextBlock>
                             </Grid>
                         </DataTemplate>
@@ -333,9 +378,9 @@
                         <GroupStyle>
                             <GroupStyle.HeaderTemplate>
                                 <DataTemplate>
-                                    <Grid Height="50">
-                                        <Label Content="{Binding Name}" Foreground="White" FontSize="16" FontFamily="Segoe UI Light"></Label>
-                                    </Grid>
+                                    <Border Height="50" Background="#FF090909">
+                                        <Label Content="{Binding Name}" Foreground="White" FontSize="16" FontFamily="Segoe UI Light" VerticalContentAlignment="Center" Margin="10,0,0,0"></Label>
+                                    </Border>
                                 </DataTemplate>
                             </GroupStyle.HeaderTemplate>
                         </GroupStyle>
@@ -374,6 +419,8 @@
                                     </ControlTemplate>
                                 </Setter.Value>
                             </Setter>
+
+                            <EventSetter Event="MouseDoubleClick" Handler="setTrack"></EventSetter>
                         </Style>
                     </ListBox.ItemContainerStyle>
                     <ListBox.Style>
