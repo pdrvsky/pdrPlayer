@@ -1,11 +1,14 @@
 ﻿using Ookii.Dialogs.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows;
@@ -31,11 +34,12 @@ namespace pdrPlayer
     public partial class window : Window
     {
         PlaybackControl playbackControl;
-        Timer timer;
+        System.Timers.Timer timer;
         Boolean playlistExpanded = true;
         String albumArtworkSet = null;
         KeyListener keyListener = new KeyListener();
         VisualBrush artworkBrush = new VisualBrush();
+        AutoResetEvent resetEvent = new AutoResetEvent(false);
 
         List<mediaStruct.Track> sourceList = new List<mediaStruct.Track>();
 
@@ -59,7 +63,7 @@ namespace pdrPlayer
             playbackControl.TrackChanged += new PlaybackControl.TrackChangedHandler(updateInterface);
             playbackControl.TrackChanged += new PlaybackControl.TrackChangedHandler(loadArtwork);
 
-            timer = new Timer();
+            timer = new System.Timers.Timer();
             timer.Interval = 1000;
             timer.Elapsed += new ElapsedEventHandler(updateSeekBar);
 
@@ -86,7 +90,7 @@ namespace pdrPlayer
             playbackControl.TrackChanged += new PlaybackControl.TrackChangedHandler(updateInterface);
             playbackControl.TrackChanged += new PlaybackControl.TrackChangedHandler(loadArtwork);
 
-            timer = new Timer();
+            timer = new System.Timers.Timer();
             timer.Interval = 1000;
             timer.Elapsed += new ElapsedEventHandler(updateSeekBar);
 
@@ -234,6 +238,17 @@ namespace pdrPlayer
 
             Settings settings = new Settings();
             settings.Show();
+            settings.Closed += (obj, ev) => {
+                libraryParser lib = new libraryParser();
+                var readList = lib.readList();
+                if (readList == null) return;
+                sourceList = lib.readList().Where(s => s.Artist != null).ToList();
+                var arts = lib.readList().GroupBy(g => g.Artist, StringComparer.InvariantCultureIgnoreCase).Select(sel => sel.Key).OrderBy(ord => ord).ToList();
+
+                LibraryView.ItemsSource = arts;
+
+                bottomGrid.InvalidateVisual();
+            };
         }
 
         private void searchArtist(object sender, KeyEventArgs e)
@@ -276,11 +291,8 @@ namespace pdrPlayer
                 .OrderBy( o => o.Year ).ThenBy( o => o.Album ).ThenBy( o => o.TrackNumber ).ToList();
 
             ArtistGrid.DataContext = artistTracks;
+            Dispatcher.Invoke(new Action(() => { animateBottomGrid(400); }), DispatcherPriority.ContextIdle);
             playbackControl.SetPlaylist( ArtistView.Items.Cast<mediaStruct.Track>().ToList() );
-
-            new System.Threading.Thread(() => {
-                Dispatcher.BeginInvoke(new Action(() => { animateBottomGrid(400); }));
-            }).Start();
 
             ArtistView.SelectedIndex = -1;
         }
@@ -328,7 +340,6 @@ namespace pdrPlayer
             progressBar.Value = 0;
             titleBlock.Text = playbackControl.currentTrack.Title;
             artistLabel.Content = playbackControl.currentTrack.Artist + " - " + playbackControl.currentTrack.Album + " (" + playbackControl.currentTrack.Year + ")";
-            //view.MoveCurrentTo(playbackControl.CurrentPlaylistObject.Get(playbackControl.CURRENT_PLAYLIST_INDEX));
             ArtistView.SelectedIndex = playbackControl.CURRENT_PLAYLIST_INDEX;
         }
 

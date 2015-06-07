@@ -73,6 +73,12 @@ namespace pdrPlayer
             this.Close();
         }
 
+        private void Grid_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                this.DragMove();
+        }
+
         private void saveSettings(Dictionary<string, string> settings)
         {
             XElement xml = new XElement("settings", settings.Select( sel => new XElement( sel.Key, sel.Value ) ));
@@ -89,7 +95,6 @@ namespace pdrPlayer
         private void msgBox()
         {
             WindowTitle.Dispatcher.Invoke(() => { WindowTitle.Content = "Ustawienia"; });
-            MessageBox.Show("Parsing Finished!");
         }
 
         private void update( int f, int c )
